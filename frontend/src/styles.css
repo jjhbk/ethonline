@@ -1,0 +1,19 @@
+.App {
+    font-family: sans-serif;
+    text-align: center;
+  }
+  
+  .sigCanvas {
+    width: 100%;
+    border: 1px solid black;
+  }
+  
+  .sigImage {
+    display: block;
+    max-width: 50%;
+    max-height: 50px;
+    margin: 0 auto;
+    border: 1px solid black;
+    padding: 2rem;
+  }
+  

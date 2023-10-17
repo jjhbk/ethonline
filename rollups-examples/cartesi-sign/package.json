@@ -1,0 +1,30 @@
+{
+  "name": "@cartesi/echo-dapp",
+  "version": "0.16.0",
+  "description": "Cartesi Echo JS DApp",
+  "dependencies": {
+    "ethers": "^5.5.4",
+    "fs": "^0.0.1-security",
+    "tesseract.js": "^5.0.2"
+  },
+  "devDependencies": {
+    "webpack": "^5.44.0",
+    "webpack-cli": "^4.7.2"
+  },
+  "scripts": {
+    "build": "webpack --entry ./dapp.js --mode production",
+    "start": "ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:5004\" node dapp.js"
+  },
+  "keywords": [
+    "cartesi"
+  ],
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false,
+    "[module-name]": false,
+    "stream": false
+  },
+  "author": "Milton Jonathan <milton.jonathan@cartesi.io>",
+  "license": "Apache-2.0"
+}
