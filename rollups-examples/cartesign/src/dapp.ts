@@ -3,8 +3,8 @@ import { createRouter } from "@deroll/router";
 import { createWallet } from "@deroll/wallet";
 import { parseAbi, decodeFunctionData } from "viem";
 // create application
-const app = createApp({ url: "http://localhost:5004" });
-/*
+const app = createApp({ url: "http://127.0.0.1:5004" });
+
 // define application ABI
 const abi = parseAbi([
   "function attackDragon(uint256 dragonId, string weapon)",
@@ -42,6 +42,9 @@ router.add<{ address: string }>(
 
 app.addAdvanceHandler(wallet.handler);
 app.addInspectHandler(router.handler);
-*/
+
 // start app
-app.start().catch((e: any) => process.exit(1));
+app.start().catch((e: any) => {
+  console.error(e);
+  process.exit(1);
+});
