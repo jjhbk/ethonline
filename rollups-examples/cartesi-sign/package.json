@@ -3,17 +3,21 @@
   "version": "0.16.0",
   "description": "Cartesi Echo JS DApp",
   "dependencies": {
+    "better-sqlite3": "^9.0.0",
     "ethers": "^5.5.4",
     "fs": "^0.0.1-security",
-    "tesseract.js": "^5.0.2"
+    "global": "^4.4.0",
+    "tesseract.js": "^5.0.2",
+    "viem": "^1.16.6"
   },
   "devDependencies": {
+    "html-loader": "^4.2.0",
     "webpack": "^5.44.0",
     "webpack-cli": "^4.7.2"
   },
   "scripts": {
-    "build": "webpack --entry ./dapp.js --mode production",
-    "start": "ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:5004\" node dapp.js"
+    "build": "webpack --config ./webpack.config.js",
+    "start": "ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:5004\" node ./dist/main.js"
   },
   "keywords": [
     "cartesi"
