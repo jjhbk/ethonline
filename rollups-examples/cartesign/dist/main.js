@@ -3600,7 +3600,7 @@ var require_address = __commonJS({
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.InvalidAddressError = void 0;
     var base_js_1 = require_base();
-    var InvalidAddressError = class extends base_js_1.BaseError {
+    var InvalidAddressError2 = class extends base_js_1.BaseError {
       constructor({ address }) {
         super(`Address "${address}" is invalid.`);
         Object.defineProperty(this, "name", {
@@ -3611,7 +3611,7 @@ var require_address = __commonJS({
         });
       }
     };
-    exports.InvalidAddressError = InvalidAddressError;
+    exports.InvalidAddressError = InvalidAddressError2;
   }
 });
 
@@ -3621,11 +3621,11 @@ var require_isAddress = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isAddress = void 0;
-    var addressRegex = /^0x[a-fA-F0-9]{40}$/;
-    function isAddress(address) {
-      return addressRegex.test(address);
+    var addressRegex2 = /^0x[a-fA-F0-9]{40}$/;
+    function isAddress2(address) {
+      return addressRegex2.test(address);
     }
-    exports.isAddress = isAddress;
+    exports.isAddress = isAddress2;
   }
 });
 
@@ -4264,12 +4264,12 @@ var require_getAddress = __commonJS({
       return `0x${address.join("")}`;
     }
     exports.checksumAddress = checksumAddress2;
-    function getAddress(address, chainId) {
+    function getAddress2(address, chainId) {
       if (!(0, isAddress_js_1.isAddress)(address))
         throw new address_js_1.InvalidAddressError({ address });
       return checksumAddress2(address, chainId);
     }
-    exports.getAddress = getAddress;
+    exports.getAddress = getAddress2;
   }
 });
 
@@ -23279,6 +23279,36 @@ var init_keccak256 = __esm({
   }
 });
 
+// node_modules/viem/_esm/errors/address.js
+var InvalidAddressError;
+var init_address = __esm({
+  "node_modules/viem/_esm/errors/address.js"() {
+    init_base();
+    InvalidAddressError = class extends BaseError2 {
+      constructor({ address }) {
+        super(`Address "${address}" is invalid.`);
+        Object.defineProperty(this, "name", {
+          enumerable: true,
+          configurable: true,
+          writable: true,
+          value: "InvalidAddressError"
+        });
+      }
+    };
+  }
+});
+
+// node_modules/viem/_esm/utils/address/isAddress.js
+function isAddress(address) {
+  return addressRegex.test(address);
+}
+var addressRegex;
+var init_isAddress = __esm({
+  "node_modules/viem/_esm/utils/address/isAddress.js"() {
+    addressRegex = /^0x[a-fA-F0-9]{40}$/;
+  }
+});
+
 // node_modules/viem/_esm/utils/data/slice.js
 function slice(value, start, end, { strict } = {}) {
   if (isHex(value, { strict: false }))
@@ -23369,10 +23399,17 @@ function checksumAddress(address_, chainId) {
   }
   return `0x${address.join("")}`;
 }
+function getAddress(address, chainId) {
+  if (!isAddress(address))
+    throw new InvalidAddressError({ address });
+  return checksumAddress(address, chainId);
+}
 var init_getAddress = __esm({
   "node_modules/viem/_esm/utils/address/getAddress.js"() {
+    init_address();
     init_toBytes();
     init_keccak256();
+    init_isAddress();
   }
 });
 
@@ -24235,15 +24272,18 @@ function decodeFunctionData({ abi: abi2, data }) {
   };
 }
 
+// node_modules/viem/_esm/index.js
+init_getAddress();
+
 // src/dapp.ts
-var app = (0, import_app.createApp)({ url: "http://localhost:5004" });
+var app = (0, import_app.createApp)({ url: "http://127.0.0.1:5004" });
 var abi = parseAbi([
   "function attackDragon(uint256 dragonId, string weapon)",
   "function drinkPotion()"
 ]);
-app.addAdvanceHandler(async ({ data }) => {
-  console.log("Received advance request data " + data);
+app.addAdvanceHandler(async (data) => {
   const payload = data["payload"];
+  console.log("Received advance request data " + data);
   const { functionName, args } = decodeFunctionData({ abi, data: payload });
   switch (functionName) {
     case "attackDragon":
@@ -24265,9 +24305,20 @@ router.add(
     });
   }
 );
+router.add(
+  "wallet/erc20/:address/:erc20",
+  ({ params: { address, erc20 } }) => {
+    return JSON.stringify({
+      balance: wallet.balanceOf(getAddress(erc20), address).toString()
+    });
+  }
+);
 app.addAdvanceHandler(wallet.handler);
 app.addInspectHandler(router.handler);
-app.start().catch((e) => process.exit(1));
+app.start().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
 /*! Bundled license information:
 
 @noble/hashes/utils.js:

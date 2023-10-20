@@ -1,0 +1,7 @@
+deployments
+__pycache__
+.venv
+out
+node_modules
+cache
+dist

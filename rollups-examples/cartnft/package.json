@@ -1,0 +1,21 @@
+{
+  "name": "cartnft",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "esbuild ./src/dapp.ts --bundle --outfile=dist/main.js --platform=node --target=node20",
+    "start": "ROLLUP_HTTP_SERVER_URL=\"http://127.0.0.1:5004\" Network=\"localhost\" node ./dist/main.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "esbuild": "^0.19.5",
+    "viem": "^1.16.6"
+  }
+}
