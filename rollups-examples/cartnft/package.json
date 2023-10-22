@@ -15,6 +15,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@types/node": "^20.8.7",
     "esbuild": "^0.19.5",
     "viem": "^1.16.6"
   }

@@ -3,51 +3,73 @@ import { hexToString, stringToHex } from "viem";
 import { Notice, Output, Voucher, Report, Error_out, Log } from "./outputs";
 import { Router } from "./router";
 import { Wallet } from "./wallet";
+import { Auctioneer } from "./auction";
+import { request } from "http";
 console.info("MarketPlace App Started");
 let rollup_address = "";
 const rollup_server: string = process.env.ROLLUP_HTTP_SERVER_URL;
-let Network: string = process.env.Network;
-console.info("rollup server url is ", rollup_server);
-if (!Network) {
+let Network: string = "localhost";
+Network = process.env.Network;
+const wallet = new Wallet(new Map());
+const auctioneer = new Auctioneer(wallet);
+
+console.info("rollup server url is ", rollup_server, Network);
+if (Network === undefined) {
   Network = "localhost";
 }
+
 console.info("Network is ", Network);
 const erc_20_portal_file = fs.readFileSync(
-  `./deployments/${Network}/ERC20Portal.json`
+  `./deployments/localhost/ERC20Portal.json`
 );
 const erc20_portal: any = JSON.parse(erc_20_portal_file.toString());
 
 const erc_721_portal_file = fs.readFileSync(
-  `./deployments/${Network}/ERC721Portal.json`
+  `./deployments/localhost/ERC721Portal.json`
 );
 const erc_721_portal: any = JSON.parse(erc_721_portal_file.toString());
 
 const dapp_address_relay_file = fs.readFileSync(
-  `./deployments/${Network}/DAppAddressRelay.json`
+  `./deployments/localhost/DAppAddressRelay.json`
 );
-const dapp_address_relay: any = JSON.parse(dapp_address_relay_file.toString());
-const router = new Router(new Wallet(new Map()));
-const send_request = async (output: any) => {
-  let endpoint = "/report";
-  switch (typeof output) {
-    case typeof Notice:
-      endpoint = "/notice";
-    case typeof Report:
-      endpoint = "/report";
-    case typeof Voucher:
-      endpoint = "/voucher";
 
-    default:
-      endpoint = "/report";
+const dapp_address_relay: any = JSON.parse(dapp_address_relay_file.toString());
+
+const ether_portal_file = fs.readFileSync(
+  "./deployments/localhost/EtherPortal.json"
+);
+const ether_portal: any = JSON.parse(ether_portal_file.toString());
+const router = new Router(auctioneer, wallet);
+const send_request = async (output: Output | Set<Output>) => {
+  if (output instanceof Output) {
+    let endpoint = "/report";
+    switch (typeof output) {
+      case typeof Notice:
+        endpoint = "/notice";
+      case typeof Report:
+        endpoint = "/report";
+      case typeof Voucher:
+        endpoint = "/voucher";
+
+      default:
+        endpoint = "/report";
+    }
+    console.log(`sending request ${typeof output}`);
+    const response = await fetch(rollup_server + endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(output),
+    });
+    console.debug(
+      `received ${output.payload} status ${response.status} body ${response.body}`
+    );
+  } else {
+    output.forEach((value: Output) => {
+      send_request(value);
+    });
   }
-  console.log(`sending request ${typeof output}`);
-  const response = await fetch(rollup_server + endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(output),
-  });
 };
 
 async function handle_advance(data: any) {
@@ -57,11 +79,20 @@ async function handle_advance(data: any) {
     const msg_sender: string = data.metadata.msg_sender;
     console.log("msg sender is", msg_sender.toLowerCase());
     const payloadStr = hexToString(payload);
+
+    if (msg_sender.toLowerCase() === ether_portal.address.toLowerCase()) {
+      try {
+        return router.process("ether_deposit", payload);
+      } catch (e) {
+        return new Error_out(`failed to process ether deposti ${payload} ${e}`);
+      }
+    }
     if (msg_sender.toLowerCase() === dapp_address_relay.address.toLowerCase()) {
       rollup_address = payload;
       console.log("Setting DApp address");
       return new Log(`DApp address set up successfully to ${rollup_address}`);
     }
+
     if (msg_sender.toLowerCase() === erc20_portal.address.toLowerCase()) {
       try {
         return router.process("erc20_deposit", payload);
@@ -136,7 +167,7 @@ var finish = { status: "accept" };
       }
       var output = await handler(rollup_req.data);
       finish.status = "accept";
-      if (typeof output === typeof Error_out) {
+      if (output instanceof Error_out) {
         finish.status = "reject";
       }
       await send_request(output);

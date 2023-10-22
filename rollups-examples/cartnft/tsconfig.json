@@ -9,7 +9,8 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": ".",
-    
+    "lib": ["es5", "es6", "dom","ES2020"], 
+
   },
   "include": ["src",]
 }

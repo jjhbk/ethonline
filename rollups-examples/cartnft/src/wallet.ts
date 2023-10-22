@@ -9,7 +9,7 @@ import {
   hexToBytes,
   bytesToHex,
 } from "viem";
-import { erc20ABI, erc721ABI } from "./rollups";
+import { CartesiDappABI, erc20ABI, erc721ABI } from "./rollups";
 
 class Wallet {
   accounts: Map<Address, Balance>;
@@ -35,6 +35,16 @@ class Wallet {
     return this._balance_get(_account);
   };
 
+  ether_deposit_process = (_payload: ByteArray): Output => {
+    try {
+      let [account, amount] = this._ether_deposit_parse(_payload);
+      console.info(`${amount} ether deposited to account ${account}`);
+      return this._ether_deposit(account, amount);
+    } catch (e) {
+      return new Error_out(e);
+    }
+  };
+
   erc20_deposit_process = (_payload: ByteArray): Output => {
     //process the abi-encoded input data sent by the erc20 portal after and erc20 deposit
     try {
@@ -58,6 +68,24 @@ class Wallet {
     }
   };
 
+  private _ether_deposit_parse = (_payload: ByteArray): [Address, bigint] => {
+    try {
+      let input_data = <[Address, bigint]>(
+        decodeAbiParameters(
+          ["bool", "address", "uint256"],
+          bytesToHex(_payload)
+        )
+      );
+      if (!input_data[0]) {
+        console.error("ether deposit unsuccessful");
+        return [null, null];
+      }
+      return [input_data[0], input_data[1]];
+    } catch (e) {
+      console.error(e);
+      return [null, null];
+    }
+  };
   private _erc20_deposit_parse = (
     _payload: ByteArray
   ): [Address, Address, bigint] => {
@@ -69,6 +97,7 @@ class Wallet {
         )
       );
       if (!input_data[0]) {
+        console.error("ether deposit unsuccessful");
         return [null, null, null];
       }
       return [input_data[1], input_data[2], input_data[3]];
@@ -93,6 +122,18 @@ class Wallet {
       console.error(e);
       return [null, null, null];
     }
+  };
+
+  private _ether_deposit = (account: Address, amount: bigint) => {
+    let balance = this._balance_get(account);
+    let notice_payload: any = {
+      type: "etherdeposit",
+      content: {
+        address: account,
+        amount: amount.toString(),
+      },
+    };
+    return new Notice(JSON.stringify(notice_payload));
   };
 
   private _erc20_deposit = (
@@ -132,6 +173,41 @@ class Wallet {
     return new Notice(JSON.stringify(notice_payload));
   };
 
+  ether_withdraw = (
+    rollup_address: Address,
+    account: Address,
+    amount: bigint
+  ) => {
+    let balance = this._balance_get(account);
+    balance.ether_decrease(amount);
+    const call = encodeFunctionData({
+      abi: CartesiDappABI,
+      functionName: "withdrawEther",
+      args: [getAddress(account), amount],
+    });
+    return new Voucher(rollup_address, hexToBytes(call));
+  };
+
+  ether_transfer = (account: Address, to: Address, amount: bigint) => {
+    try {
+      let balance = this._balance_get(account);
+      let balance_to = this._balance_get(to);
+      balance.ether_decrease(amount);
+      balance_to.ether_increase(amount);
+      let notice_payload = {
+        type: "erc20transfer",
+        content: {
+          from: account,
+          to: to,
+          amount: amount.toString(),
+        },
+      };
+      console.info(`${amount} ether transferred from ${account} to ${to}`);
+      return new Notice(JSON.stringify(notice_payload));
+    } catch (e) {
+      return new Error_out(e);
+    }
+  };
   erc20_withdraw = (account: Address, erc20: Address, amount: bigint) => {
     let balance = this._balance_get(account);
     balance.erc20_decrease(erc20, amount);
