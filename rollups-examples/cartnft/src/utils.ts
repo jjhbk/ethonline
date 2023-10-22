@@ -1,6 +1,8 @@
-/*// Define a function to convert  string to hex
+// Define a function to convert  string to hex
 
-const stringToHex = (str) => {
+import { Bytes } from "ethers";
+
+const stringToHex = (str: string) => {
   let hex = "";
   for (let i = 0; i < str.length; i++) {
     const charCode = str.charCodeAt(i);
@@ -13,7 +15,7 @@ const stringToHex = (str) => {
 };
 
 // Define a function to convert hex to string
-const hexToString = (hex) => {
+const hexToString = (hex: string) => {
   let str = "";
   for (let i = 0; i < hex.length; i += 2) {
     const hexValue = hex.substr(i, 2);
@@ -25,14 +27,14 @@ const hexToString = (hex) => {
 
 // Define a function to convert bytes to hex
 
-const bytestoHex = (byteArray) => {
+const bytestoHex = (byteArray: Bytes) => {
   return Array.from(byteArray, function (byte) {
     return ("0" + (byte & 0xff).toString(16)).slice(-2);
   }).join("");
 };
 
 // Define a function to convert hex to bytes
-const hexToBytes = (hex) => {
+const hexToBytes = (hex: string) => {
   var bytes = [];
 
   for (var c = 0; c < hex.length; c += 2) {
@@ -41,5 +43,4 @@ const hexToBytes = (hex) => {
 
   return bytes;
 };
-module.exports = { stringToHex, hexToString, bytestoHex, hexToBytes };
-*/
+export { stringToHex, hexToString, bytestoHex, hexToBytes };

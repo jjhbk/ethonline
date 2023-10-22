@@ -1,10 +1,11 @@
 import * as fs from "fs";
-import { hexToString, stringToHex } from "viem";
+import { hexToBytes, hexToString, stringToBytes, stringToHex } from "viem";
 import { Notice, Output, Voucher, Report, Error_out, Log } from "./outputs";
 import { Router } from "./router";
 import { Wallet } from "./wallet";
 import { Auctioneer } from "./auction";
 import { request } from "http";
+import { NODATA } from "dns";
 console.info("MarketPlace App Started");
 let rollup_address = "";
 const rollup_server: string = process.env.ROLLUP_HTTP_SERVER_URL;
@@ -42,18 +43,17 @@ const ether_portal: any = JSON.parse(ether_portal_file.toString());
 const router = new Router(auctioneer, wallet);
 const send_request = async (output: Output | Set<Output>) => {
   if (output instanceof Output) {
-    let endpoint = "/report";
-    switch (typeof output) {
-      case typeof Notice:
-        endpoint = "/notice";
-      case typeof Report:
-        endpoint = "/report";
-      case typeof Voucher:
-        endpoint = "/voucher";
+    let endpoint;
+    console.log("type of output", output.type);
 
-      default:
-        endpoint = "/report";
+    if (output.type == "notice") {
+      endpoint = "/notice";
+    } else if (output.type == "voucher") {
+      endpoint = "/voucher";
+    } else {
+      endpoint = "/report";
     }
+
     console.log(`sending request ${typeof output}`);
     const response = await fetch(rollup_server + endpoint, {
       method: "POST",
@@ -89,8 +89,11 @@ async function handle_advance(data: any) {
     }
     if (msg_sender.toLowerCase() === dapp_address_relay.address.toLowerCase()) {
       rollup_address = payload;
+      router.set_rollup_address(rollup_address);
       console.log("Setting DApp address");
-      return new Log(`DApp address set up successfully to ${rollup_address}`);
+      return new Notice(
+        `DApp address set up successfully to ${rollup_address}`
+      );
     }
 
     if (msg_sender.toLowerCase() === erc20_portal.address.toLowerCase()) {
